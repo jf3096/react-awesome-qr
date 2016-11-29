@@ -7,15 +7,17 @@ import './css/CanvasImage.less';
 interface ICanvasImageRequiredProps {
     qrSrc: string;
     headPhotoSrc: string;
+
+}
+
+interface ICanvasImageProps extends ICanvasImageRequiredProps {
+    className?: string;
+    limitDimension?: number;
+    headDimensionRatio?: number;
     proxy?: {
         enable: boolean;
         proxyServer: string;
     }
-}
-
-interface ICanvasImageProps extends ICanvasImageRequiredProps {
-    limitDimension?: number;
-    headDimensionRatio?: number;
 }
 
 interface ICanvasImageStates {
@@ -57,7 +59,7 @@ export default class CanvasImage extends React.Component<ICanvasImageProps,ICanv
          */
         proxy: {
             enable: true,
-            proxyServer: `https://crossorigin.me`,
+            proxyServer: `http://allen-io.ml:8989/`,
         }
     };
 
@@ -74,10 +76,14 @@ export default class CanvasImage extends React.Component<ICanvasImageProps,ICanv
      */
     private loadImage(src: string): Promise<HTMLImageElement> {
         return new Promise((resolve, reject) => {
-            const image = new Image();
+            let image = new Image();
             image.crossOrigin = "*";
-            image.onload = () => resolve(image);
-            image.onerror = reject;
+            image.onload = () => {
+                resolve(image);
+            };
+            image.onerror = (err) => {
+                reject(err);
+            };
             image.src = src;
         });
     }
@@ -113,19 +119,40 @@ export default class CanvasImage extends React.Component<ICanvasImageProps,ICanv
             headPhotoImg.width = qrImg.width * headDimensionRatio;
             headPhotoImg.height = qrImg.height * headDimensionRatio;
             ctx.drawImage(qrImg, 0, 0, qrImg.width, qrImg.height);
-            ctx.strokeStyle = "#fff";
-            ctx.lineWidth = 2;
-            ctx.strokeRect((width - headPhotoImg.width) / 2 - 1, (height - headPhotoImg.height) / 2 - 1, headPhotoImg.width + 2, headPhotoImg.height + 2);
-            ctx.drawImage(
-                headPhotoImg,
-                (width - headPhotoImg.width) / 2, (height - headPhotoImg.height) / 2, headPhotoImg.width, headPhotoImg.height,
-            );
+            this.drawHeadPhoto(ctx, headPhotoImg, canvas);
             return canvas.toDataURL();
         });
     }
 
-    private drawHeadPhoto(headPhotoImg: HTMLImageElement) {
+    private drawHeadPhotoBorder(ctx: CanvasRenderingContext2D, strokeStyle: string, lineWidth: number, startX: number, startY: number, width: number, height: number) {
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = lineWidth;
+        ctx.strokeRect(startX - 1, startY - 1, width + 2, height + 2);
+    }
 
+    private drawHeadPhoto(ctx: CanvasRenderingContext2D, headPhotoImg: HTMLImageElement, canvas: HTMLCanvasElement) {
+        const {width, height} = headPhotoImg;
+        const headPhotoImgStartX = (canvas.width - width) / 2;
+        const headPhotoImgStartY = (canvas.height - height) / 2;
+        ctx.drawImage(
+            headPhotoImg,
+            headPhotoImgStartX, headPhotoImgStartY, width, height
+        );
+        this.drawHeadPhotoBorder(ctx, `#fff`, 2, headPhotoImgStartX, headPhotoImgStartY, width, height);
+    }
+
+    private tryAppendProxy(src: string) {
+        const {enable, proxyServer} = this.props.proxy;
+        const result = enable ? proxyServer + src : src;
+        debugger;
+        if (process.env != `production`) {
+            console.log(JSON.stringify({
+                enable,
+                proxyServer,
+                result
+            }))
+        }
+        return result;
     }
 
     /**
@@ -135,8 +162,10 @@ export default class CanvasImage extends React.Component<ICanvasImageProps,ICanv
         if (this.state.src) {
             return;
         }
-        const {qrSrc, headPhotoSrc} = this.props;
+        let {qrSrc, headPhotoSrc} = this.props;
         if (qrSrc && headPhotoSrc) {
+            qrSrc = this.tryAppendProxy(qrSrc);
+            headPhotoSrc = this.tryAppendProxy(headPhotoSrc);
             this.mergeQRWithHeadImage(qrSrc, headPhotoSrc).then((base64: string) => {
                 this.setState({
                     src: base64

@@ -10,7 +10,7 @@ class AppComponent extends React.Component {
         const qrProps = {
             qrSrc: '',
             headPhotoSrc: '',
-            isLoading: true
+            isLoading: false
         };
         return (
             <div className="index">

@@ -34,8 +34,12 @@ var CanvasImage = (function (_super) {
         return new Promise(function (resolve, reject) {
             var image = new Image();
             image.crossOrigin = "*";
-            image.onload = function () { return resolve(image); };
-            image.onerror = reject;
+            image.onload = function () {
+                resolve(image);
+            };
+            image.onerror = function (err) {
+                reject(err);
+            };
             image.src = src;
         });
     };
@@ -71,14 +75,34 @@ var CanvasImage = (function (_super) {
             headPhotoImg.width = qrImg.width * headDimensionRatio;
             headPhotoImg.height = qrImg.height * headDimensionRatio;
             ctx.drawImage(qrImg, 0, 0, qrImg.width, qrImg.height);
-            ctx.strokeStyle = "#fff";
-            ctx.lineWidth = 2;
-            ctx.strokeRect((width - headPhotoImg.width) / 2 - 1, (height - headPhotoImg.height) / 2 - 1, headPhotoImg.width + 2, headPhotoImg.height + 2);
-            ctx.drawImage(headPhotoImg, (width - headPhotoImg.width) / 2, (height - headPhotoImg.height) / 2, headPhotoImg.width, headPhotoImg.height);
+            _this.drawHeadPhoto(ctx, headPhotoImg, canvas);
             return canvas.toDataURL();
         });
     };
-    CanvasImage.prototype.drawHeadPhoto = function (headPhotoImg) {
+    CanvasImage.prototype.drawHeadPhotoBorder = function (ctx, strokeStyle, lineWidth, startX, startY, width, height) {
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = lineWidth;
+        ctx.strokeRect(startX - 1, startY - 1, width + 2, height + 2);
+    };
+    CanvasImage.prototype.drawHeadPhoto = function (ctx, headPhotoImg, canvas) {
+        var width = headPhotoImg.width, height = headPhotoImg.height;
+        var headPhotoImgStartX = (canvas.width - width) / 2;
+        var headPhotoImgStartY = (canvas.height - height) / 2;
+        ctx.drawImage(headPhotoImg, headPhotoImgStartX, headPhotoImgStartY, width, height);
+        this.drawHeadPhotoBorder(ctx, "#fff", 2, headPhotoImgStartX, headPhotoImgStartY, width, height);
+    };
+    CanvasImage.prototype.tryAppendProxy = function (src) {
+        var _a = this.props.proxy, enable = _a.enable, proxyServer = _a.proxyServer;
+        var result = enable ? proxyServer + src : src;
+        debugger;
+        if (process.env != "production") {
+            console.log(JSON.stringify({
+                enable: enable,
+                proxyServer: proxyServer,
+                result: result
+            }));
+        }
+        return result;
     };
     /**
      * try set state if image onloaded
@@ -90,6 +114,8 @@ var CanvasImage = (function (_super) {
         }
         var _a = this.props, qrSrc = _a.qrSrc, headPhotoSrc = _a.headPhotoSrc;
         if (qrSrc && headPhotoSrc) {
+            qrSrc = this.tryAppendProxy(qrSrc);
+            headPhotoSrc = this.tryAppendProxy(headPhotoSrc);
             this.mergeQRWithHeadImage(qrSrc, headPhotoSrc).then(function (base64) {
                 _this.setState({
                     src: base64
@@ -136,7 +162,7 @@ var CanvasImage = (function (_super) {
          */
         proxy: {
             enable: true,
-            proxyServer: "https://crossorigin.me",
+            proxyServer: "http://allen-io.ml:8989/",
         }
     };
     return CanvasImage;

@@ -5,7 +5,6 @@ import * as React from 'react';
 import {findDOMNode} from 'react-dom';
 import * as cx from 'classnames';
 import './css/QR.less';
-import {mergeQRWithHeadImage} from '../../utils/images';
 import ReactDOM = __React.ReactDOM;
 import CanvasImage from './CanvasImage';
 
@@ -16,6 +15,7 @@ interface IQRProps {
 }
 
 interface IQRStates {
+    src: string
 }
 
 export default class QR extends React.Component<IQRProps,IQRStates> {
@@ -26,22 +26,7 @@ export default class QR extends React.Component<IQRProps,IQRStates> {
 
     public constructor(props: IQRProps) {
         super(props);
-        this.state = {
-            src: null
-        }
     }
-
-    //
-    // public componentDidMount() {
-    //     mergeQRWithHeadImage(findDOMNode<HTMLCanvasElement>(this.refs.canvas),
-    //         `https://crossorigin.me/https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=gQEu8ToAAAAAAAAAASxodHRwOi8vd2VpeGluLnFxLmNvbS9xLzZVdzlVMy1sYmNjVS1TcjV3R0p5AAIEy60yWAMEMIUnAA==`,
-    //         `https://crossorigin.me/http://image.hao1hao1.com/group1/M00/71/B8/CgAgEVgz9tKACR5gAAFbhS3n0jE395.jpg`
-    //     ).then((canvas) => {
-    //         const base64 = canvas.toDataURL();
-    //         console.log(base64);
-    //         this.setState({src: base64})
-    //     });
-    // }
 
     private isLoading() {
         return this.props.isLoading;
@@ -57,23 +42,34 @@ export default class QR extends React.Component<IQRProps,IQRStates> {
         return this.props.headPhotoSrc;
     }
 
+    private renderQrImage() {
+        const {baseCls} = this;
+        const isLoading = this.isLoading();
+        if (isLoading) {
+            return (
+                <img className={`${baseCls}-img`} src={this.placeholder}/>
+            )
+        } else {
+            return (
+                <CanvasImage
+                    className={`${baseCls}-img`}
+                    qrSrc={`https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=gQEu8ToAAAAAAAAAASxodHRwOi8vd2VpeGluLnFxLmNvbS9xLzZVdzlVMy1sYmNjVS1TcjV3R0p5AAIEy60yWAMEMIUnAA==`}
+                    headPhotoSrc={`http://image.hao1hao1.com/group1/M00/71/B8/CgAgEVgz9tKACR5gAAFbhS3n0jE395.jpg`}
+                />
+            )
+        }
+    }
+
     public render() {
         const {baseCls, loader} = this;
         const isLoading = this.isLoading();
         const wrapperCls = cx(`${baseCls}-wrapper`, isLoading && `${baseCls}-loading`);
-        const headPhotoSrc = this.getHeaderPhotoSrc();
-        const qrSrc = this.getQrSrc();
         return (
             <div className={baseCls}>
                 <div className={wrapperCls}>
-                    <CanvasImage qrSrc={`https://crossorigin.me/https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=gQEu8ToAAAAAAAAAASxodHRwOi8vd2VpeGluLnFxLmNvbS9xLzZVdzlVMy1sYmNjVS1TcjV3R0p5AAIEy60yWAMEMIUnAA==`}
-                                 headPhotoSrc={`https://crossorigin.me/http://image.hao1hao1.com/group1/M00/71/B8/CgAgEVgz9tKACR5gAAFbhS3n0jE395.jpg`}
-                    />
-                    {/*<canvas ref="canvas" width="100%" height="100%" style={{width:`100%`,height:`100%`}}/>*/}
-                    {/*<img className={`${baseCls}-img`} src={this.state.src}/>*/}
-                    {/*{headPhotoSrc && <img className={`${baseCls}-head`} src={headPhotoSrc}/>}*/}
+                    {this.renderQrImage()}
                 </div>
-                {/*{isLoading && <img className={`${baseCls}-spinner`} src={loader}/>}*/}
+                {isLoading && <img className={`${baseCls}-spinner`} src={loader}/>}
             </div>
         )
     }

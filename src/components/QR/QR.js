@@ -18,21 +18,7 @@ var QR = (function (_super) {
         this.baseCls = "qr";
         this.placeholder = require("../../images/qr-placeholder.png");
         this.loader = require("../../images/ic-ajax-loader.gif");
-        this.state = {
-            src: null
-        };
     }
-    //
-    // public componentDidMount() {
-    //     mergeQRWithHeadImage(findDOMNode<HTMLCanvasElement>(this.refs.canvas),
-    //         `https://crossorigin.me/https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=gQEu8ToAAAAAAAAAASxodHRwOi8vd2VpeGluLnFxLmNvbS9xLzZVdzlVMy1sYmNjVS1TcjV3R0p5AAIEy60yWAMEMIUnAA==`,
-    //         `https://crossorigin.me/http://image.hao1hao1.com/group1/M00/71/B8/CgAgEVgz9tKACR5gAAFbhS3n0jE395.jpg`
-    //     ).then((canvas) => {
-    //         const base64 = canvas.toDataURL();
-    //         console.log(base64);
-    //         this.setState({src: base64})
-    //     });
-    // }
     QR.prototype.isLoading = function () {
         return this.props.isLoading;
     };
@@ -44,17 +30,23 @@ var QR = (function (_super) {
     QR.prototype.getHeaderPhotoSrc = function () {
         return this.props.headPhotoSrc;
     };
+    QR.prototype.renderQrImage = function () {
+        var baseCls = this.baseCls;
+        var isLoading = this.isLoading();
+        if (isLoading) {
+            return (React.createElement("img", {className: baseCls + "-img", src: this.placeholder}));
+        }
+        else {
+            return (React.createElement(CanvasImage_1.default, {className: baseCls + "-img", qrSrc: "https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=gQEu8ToAAAAAAAAAASxodHRwOi8vd2VpeGluLnFxLmNvbS9xLzZVdzlVMy1sYmNjVS1TcjV3R0p5AAIEy60yWAMEMIUnAA==", headPhotoSrc: "http://image.hao1hao1.com/group1/M00/71/B8/CgAgEVgz9tKACR5gAAFbhS3n0jE395.jpg"}));
+        }
+    };
     QR.prototype.render = function () {
         var _a = this, baseCls = _a.baseCls, loader = _a.loader;
         var isLoading = this.isLoading();
         var wrapperCls = cx(baseCls + "-wrapper", isLoading && baseCls + "-loading");
-        var headPhotoSrc = this.getHeaderPhotoSrc();
-        var qrSrc = this.getQrSrc();
         return (React.createElement("div", {className: baseCls}, 
-            React.createElement("div", {className: wrapperCls}, 
-                React.createElement(CanvasImage_1.default, {qrSrc: "https://crossorigin.me/https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=gQEu8ToAAAAAAAAAASxodHRwOi8vd2VpeGluLnFxLmNvbS9xLzZVdzlVMy1sYmNjVS1TcjV3R0p5AAIEy60yWAMEMIUnAA==", headPhotoSrc: "https://crossorigin.me/http://image.hao1hao1.com/group1/M00/71/B8/CgAgEVgz9tKACR5gAAFbhS3n0jE395.jpg"})
-            )
-        ));
+            React.createElement("div", {className: wrapperCls}, this.renderQrImage()), 
+            isLoading && React.createElement("img", {className: baseCls + "-spinner", src: loader})));
     };
     return QR;
 }(React.Component));
